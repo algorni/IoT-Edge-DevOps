@@ -1,21 +1,22 @@
+using System;
+using System.Globalization;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
+using System.Runtime.Loader;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Azure.CognitiveServices.Vision.CustomVision.Training;
+using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices.Shared;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+
 namespace HttpVideoFrameCaptureModule
 {
-    using System;
-    using System.Globalization;
-    using System.IO;
-    using System.Net.Http;
-    using System.Net.Http.Headers;
-    using System.Runtime.InteropServices;
-    using System.Runtime.Loader;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Microsoft.Azure.Devices.Client;
-    using Microsoft.Azure.Devices.Shared;
-    using Microsoft.Extensions.Configuration;
-    using Newtonsoft.Json;
-
     class Program
     {
         static IConfiguration configuration;
@@ -23,14 +24,17 @@ namespace HttpVideoFrameCaptureModule
         static string IMAGE_PROCESSING_ENDPOINT;
         static string IMAGE_SOURCE_URL;
         static TimeSpan IMAGE_POLLING_INTERVAL = TimeSpan.FromSeconds(10.0); //default 10 sconds
-        static string MODE;
-
         static int loopNumber = 0;
         static bool reportingLoop = false;
         static int reportingLoopInterval = 15;
 
         static HttpClient httpClient = new HttpClient();
 
+        static OperatingMode MODE = OperatingMode.ImageClassification;
+
+        static CustomVisionTrainingDetails CUSTOM_VISION_TRAINING = new CustomVisionTrainingDetails();
+
+        static CustomVisionTrainingClient customVisionTrainingClient = null;
 
         static void Main(string[] args)
         {
@@ -45,21 +49,28 @@ namespace HttpVideoFrameCaptureModule
 
             Console.WriteLine("Configuration loaded");
 
-            //Get the Module mode
-            //MODE = configuration["MODE"].ToString();
-
             //Getting the IMAGE PROCESSING ENDOPOINT (the Custom Vision Module trained)
             IMAGE_PROCESSING_ENDPOINT = configuration["IMAGE_PROCESSING_ENDPOINT"].ToString();
 
             //The url of the image source
             IMAGE_SOURCE_URL = configuration["IMAGE_SOURCE_URL"].ToString();
-            
+
             var IMAGE_POLLING_INTERVAL_string = configuration["IMAGE_POLLING_INTERVAL"].ToString();
             TimeSpan.TryParse(IMAGE_POLLING_INTERVAL_string, out IMAGE_POLLING_INTERVAL);
 
             Console.WriteLine($"IMAGE_PROCESSING_ENDPOINT:{IMAGE_PROCESSING_ENDPOINT}");
             Console.WriteLine($"IMAGE_SOURCE_URL:{IMAGE_SOURCE_URL}");
             Console.WriteLine($"IMAGE_POLLING_INTERVAL:{IMAGE_POLLING_INTERVAL_string}");
+
+            //check also for the MODE (we can spin up the module just for training purpose)
+            string modeStr = configuration["MODE"] as string;
+            if (!string.IsNullOrEmpty(modeStr))
+            {
+                var updated = Enum.TryParse<OperatingMode>(modeStr, out MODE);
+            }
+
+            //and check also if the Custom Vision training endpoint details are provided
+            configuration.Bind("CUSTOM_VISION_TRAINING", CUSTOM_VISION_TRAINING);
 
             Init().Wait();
 
@@ -97,10 +108,10 @@ namespace HttpVideoFrameCaptureModule
             // Execute callback function during Init for Twin desired properties
             var twin = await ioTHubModuleClient.GetTwinAsync();
             await onDesiredPropertiesUpdate(twin.Properties.Desired, ioTHubModuleClient);
-            
+
             //Register the desired property callback
             await ioTHubModuleClient.SetDesiredPropertyUpdateCallbackAsync(onDesiredPropertiesUpdate, ioTHubModuleClient);
-            
+
             //start the main thread that will do the real job of the module
             var thread = new Thread(() => mainThreadBody(ioTHubModuleClient));
             thread.Start();
@@ -112,7 +123,7 @@ namespace HttpVideoFrameCaptureModule
             Console.WriteLine("Entering main thread");
 
             while (true)
-            {   
+            {
                 if (loopNumber == reportingLoopInterval)
                 {
                     reportingLoop = true;
@@ -138,22 +149,44 @@ namespace HttpVideoFrameCaptureModule
 
                 if (imageBytes != null)
                 {
-                    //call the Custom Vision Module 
-                    PredictionResponse predictionResponse = invokePrediction(imageBytes, moduleClient);
-
-                    if (predictionResponse != null)
+                    if (MODE == OperatingMode.ImageClassification)
                     {
-                        //publish the response message as output
-                        publishPredictionResponse(predictionResponse, moduleClient);
+                        //call the Custom Vision Module 
+                        PredictionResponse predictionResponse = invokePrediction(imageBytes, moduleClient);
 
-                        TimeSpan endToEndDuration = DateTime.UtcNow - startTime;
-
-                        if (reportingLoop)
+                        if (predictionResponse != null)
                         {
-                            reportLatency("END_TO_END", endToEndDuration, moduleClient);
+                            //publish the response message as output
+                            publishPredictionResponse(predictionResponse, moduleClient);
+
+                            TimeSpan endToEndDuration = DateTime.UtcNow - startTime;
+
+                            if (reportingLoop)
+                            {
+                                reportLatency("END_TO_END", endToEndDuration, moduleClient);
+                            }
+
+                            loopNumber++;
+                        }
+                    }
+
+                    if ((MODE == OperatingMode.TrainingToCloud) && CUSTOM_VISION_TRAINING.IsValid())
+                    {
+                        if (customVisionTrainingClient == null)
+                        {
+                            customVisionTrainingClient =
+                                new Microsoft.Azure.CognitiveServices.Vision.CustomVision.Training.CustomVisionTrainingClient()
+                                {
+                                    ApiKey = CUSTOM_VISION_TRAINING.ApiKey,
+                                    Endpoint = CUSTOM_VISION_TRAINING.EndPoint
+                                };
                         }
 
-                        loopNumber++;
+                        //ok now just send an image to Custom Vision for training purpose 
+                        MemoryStream imageMemoryStream = new MemoryStream(imageBytes);
+
+                        //Upload the image into Custom Vision 
+                        customVisionTrainingClient.CreateImagesFromData(CUSTOM_VISION_TRAINING.ProjectId, imageMemoryStream);
                     }
                 }
 
@@ -168,8 +201,8 @@ namespace HttpVideoFrameCaptureModule
             }
         }
 
-        
-    
+
+
         private static byte[] getImage(ModuleClient moduleClient)
         {
             byte[] imageByte = null;
@@ -241,7 +274,7 @@ namespace HttpVideoFrameCaptureModule
 
                 return null;
             }
-            
+
             if (httpResponse.IsSuccessStatusCode)
             {
                 string predictionResponseString = httpResponse.Content.ReadAsStringAsync().Result;
@@ -268,7 +301,7 @@ namespace HttpVideoFrameCaptureModule
 
             Message message = new Message(messageContent);
             message.ContentType = "application/json";
-            message.Properties.Add("MSG","PredictionResponse");
+            message.Properties.Add("MSG", "PredictionResponse");
 
             moduleClient.SendEventAsync(message).Wait();
         }
@@ -302,7 +335,20 @@ namespace HttpVideoFrameCaptureModule
                     moduleClient.UpdateReportedPropertiesAsync(desiredProperties);
                 }
             }
-            
+
+            if (desiredProperties.Contains("MODE"))
+            {
+                //update the MODE
+                var updated = Enum.TryParse<OperatingMode>(desiredProperties["MODE"], out MODE);
+
+                if (updated)
+                {
+                    Console.WriteLine("MODE Updated.");
+
+                    moduleClient.UpdateReportedPropertiesAsync(desiredProperties);
+                }
+            }
+
             return Task.CompletedTask;
         }
     }
