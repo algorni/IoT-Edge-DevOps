@@ -23,7 +23,8 @@ namespace HttpVideoFrameCaptureModule
 
         static string IMAGE_PROCESSING_ENDPOINT;
         static string IMAGE_SOURCE_URL;
-        static TimeSpan IMAGE_POLLING_INTERVAL = TimeSpan.FromSeconds(10.0); //default 10 sconds
+        static IPCameraCredential IP_CAMERA_CREDENTIAL = new IPCameraCredential();
+        static TimeSpan IMAGE_POLLING_INTERVAL = TimeSpan.FromSeconds(60.0); //default 60 sconds
         static int loopNumber = 0;
         static bool reportingLoop = false;
         static int reportingLoopInterval = 15;
@@ -56,21 +57,42 @@ namespace HttpVideoFrameCaptureModule
             IMAGE_SOURCE_URL = configuration["IMAGE_SOURCE_URL"].ToString();
 
             var IMAGE_POLLING_INTERVAL_string = configuration["IMAGE_POLLING_INTERVAL"].ToString();
-            TimeSpan.TryParse(IMAGE_POLLING_INTERVAL_string, out IMAGE_POLLING_INTERVAL);
-
-            Console.WriteLine($"IMAGE_PROCESSING_ENDPOINT:{IMAGE_PROCESSING_ENDPOINT}");
-            Console.WriteLine($"IMAGE_SOURCE_URL:{IMAGE_SOURCE_URL}");
-            Console.WriteLine($"IMAGE_POLLING_INTERVAL:{IMAGE_POLLING_INTERVAL_string}");
+            int IMAGE_POLLING_INTERVAL_seconds = 60;
+            var pollingIntervalParsed = int.TryParse(IMAGE_POLLING_INTERVAL_string, out IMAGE_POLLING_INTERVAL_seconds);
+            IMAGE_POLLING_INTERVAL = TimeSpan.FromSeconds(IMAGE_POLLING_INTERVAL_seconds);
 
             //check also for the MODE (we can spin up the module just for training purpose)
             string modeStr = configuration["MODE"] as string;
             if (!string.IsNullOrEmpty(modeStr))
             {
                 var updated = Enum.TryParse<OperatingMode>(modeStr, out MODE);
+                Console.WriteLine($"OperatingMode: {MODE} - Parsed: {updated}");
             }
 
             //and check also if the Custom Vision training endpoint details are provided
-            configuration.Bind("CUSTOM_VISION_TRAINING", CUSTOM_VISION_TRAINING);
+            CUSTOM_VISION_TRAINING.ApiKey = configuration["CUSTOM_VISION_TRAINING_ApiKey"];   
+            CUSTOM_VISION_TRAINING.EndPoint = configuration["CUSTOM_VISION_TRAINING_EndPoint"]; 
+            var projectIdStr = configuration["CUSTOM_VISION_TRAINING_ProjectId"];   
+            Guid projectId;        
+            var projectIdParsed = Guid.TryParse(projectIdStr, out projectId);
+            if ( projectIdParsed)
+                CUSTOM_VISION_TRAINING.ProjectId = projectId;
+
+            IP_CAMERA_CREDENTIAL.UserName = configuration["IP_CAMERA_CREDENTIAL_UserName"];   
+            IP_CAMERA_CREDENTIAL.Password = configuration["IP_CAMERA_CREDENTIAL_Password"]; 
+
+            Console.WriteLine($"IMAGE_PROCESSING_ENDPOINT:{IMAGE_PROCESSING_ENDPOINT}");
+            Console.WriteLine($"IMAGE_SOURCE_URL:{IMAGE_SOURCE_URL}");
+            Console.WriteLine($"IMAGE_POLLING_INTERVAL:{IMAGE_POLLING_INTERVAL.ToString()} - Parsed: {pollingIntervalParsed}");
+            
+            Console.WriteLine($"MODE:{MODE}");
+
+            Console.WriteLine($"CUSTOM_VISION_TRAINING_ApiKey:{CUSTOM_VISION_TRAINING.ApiKey}");
+            Console.WriteLine($"CUSTOM_VISION_TRAINING_EndPoint:{CUSTOM_VISION_TRAINING.EndPoint}");
+            Console.WriteLine($"CUSTOM_VISION_TRAINING_ProjectId:{CUSTOM_VISION_TRAINING.ProjectId}");
+
+            Console.WriteLine($"IP_CAMERA_CREDENTIAL_UserName:{IP_CAMERA_CREDENTIAL.UserName}");
+            Console.WriteLine($"IP_CAMERA_CREDENTIAL_Password:{IP_CAMERA_CREDENTIAL.Password}");
 
             Init().Wait();
 
@@ -126,6 +148,7 @@ namespace HttpVideoFrameCaptureModule
             {
                 if (loopNumber == reportingLoopInterval)
                 {
+                    Console.WriteLine("In this loop performance will be reported.");
                     reportingLoop = true;
                     loopNumber = 0;
                 }
@@ -138,6 +161,7 @@ namespace HttpVideoFrameCaptureModule
 
                 if (moduleClient == null)
                 {
+                    Console.WriteLine("Module Client is NULL.");
                     throw new InvalidOperationException("UserContext doesn't contain " + "expected values");
                 }
 
@@ -149,6 +173,8 @@ namespace HttpVideoFrameCaptureModule
 
                 if (imageBytes != null)
                 {
+                    Console.WriteLine("Image Bytes not null... good job.");
+
                     if (MODE == OperatingMode.ImageClassification)
                     {
                         //call the Custom Vision Module 
@@ -170,10 +196,23 @@ namespace HttpVideoFrameCaptureModule
                         }
                     }
 
+                    if ( CUSTOM_VISION_TRAINING.IsValid())
+                    {
+                        Console.WriteLine("CUSTOM_VISION_TRAINING.IsValid()");
+                    }
+                    else
+                    {
+                        Console.WriteLine("NOT CUSTOM_VISION_TRAINING.IsValid()");
+                    }
+
                     if ((MODE == OperatingMode.TrainingToCloud) && CUSTOM_VISION_TRAINING.IsValid())
                     {
+                        Console.WriteLine("OperatingMode TrainingToCloud and Custom Vision training data is provided");
+
                         if (customVisionTrainingClient == null)
                         {
+                            Console.WriteLine("Creating CustomVisionTrainingClient.");
+
                             customVisionTrainingClient =
                                 new Microsoft.Azure.CognitiveServices.Vision.CustomVision.Training.CustomVisionTrainingClient()
                                 {
@@ -185,18 +224,27 @@ namespace HttpVideoFrameCaptureModule
                         //ok now just send an image to Custom Vision for training purpose 
                         MemoryStream imageMemoryStream = new MemoryStream(imageBytes);
 
-                        //Upload the image into Custom Vision 
-                        customVisionTrainingClient.CreateImagesFromData(CUSTOM_VISION_TRAINING.ProjectId, imageMemoryStream);
+                        Console.WriteLine("Uploading the image into Custom Vision ");
+                        Microsoft.Azure.CognitiveServices.Vision.CustomVision.Training.Models.ImageCreateSummary imageCreateSummary =   
+                            customVisionTrainingClient.CreateImagesFromData(CUSTOM_VISION_TRAINING.ProjectId, imageMemoryStream);
+
+                        Console.WriteLine($"Success: {imageCreateSummary.IsBatchSuccessful}");
                     }
                 }
+
+                Console.WriteLine("Calculating time to next run");
 
                 TimeSpan loopDuration = DateTime.UtcNow - startTime;
 
                 TimeSpan timeToNextRun = IMAGE_POLLING_INTERVAL - loopDuration;
 
+                Console.WriteLine($"Time to next run: {timeToNextRun.ToString()}");
+
                 if (timeToNextRun > TimeSpan.FromSeconds(0.0))
                 {
-                    Task.Delay((int)timeToNextRun.TotalMilliseconds);
+                    Console.WriteLine("Delay");
+
+                    Task.Delay((int)timeToNextRun.TotalMilliseconds).Wait();
                 }
             }
         }
@@ -205,6 +253,8 @@ namespace HttpVideoFrameCaptureModule
 
         private static byte[] getImage(ModuleClient moduleClient)
         {
+            Console.WriteLine("Getting Image");
+
             byte[] imageByte = null;
 
             //used for latency calcualtion
@@ -215,7 +265,19 @@ namespace HttpVideoFrameCaptureModule
 
             try
             {
+                if ( IP_CAMERA_CREDENTIAL.IsValid())
+                {
+                    string credentialToEncode = $"{IP_CAMERA_CREDENTIAL.UserName}:{IP_CAMERA_CREDENTIAL.Password}";
+
+                    Console.WriteLine($"Using Credentials: {credentialToEncode}");
+
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                        "Basic", Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(credentialToEncode)));
+                }
+
                 httpResponse = httpClient.GetAsync(IMAGE_SOURCE_URL).Result;
+
+                Console.WriteLine("HTTP call executed.");
             }
             catch (Exception ex)
             {
@@ -224,14 +286,33 @@ namespace HttpVideoFrameCaptureModule
                 return null;
             }
 
-            if (httpResponse.IsSuccessStatusCode)
+            try
             {
-                bool isImage = isImageContentType(httpResponse.Content.Headers.ContentType);
-
-                if (isImage)
+                if (httpResponse.IsSuccessStatusCode)
                 {
-                    imageByte = httpResponse.Content.ReadAsByteArrayAsync().Result;
+                    Console.WriteLine($"HTTP call IsSuccessStatusCode: {httpResponse.StatusCode}");
+
+                    bool isImage = isImageContentType(httpResponse.Content.Headers.ContentType);
+
+                    if (isImage)
+                    {
+                        Console.WriteLine("Is an Image");
+
+                        imageByte = httpResponse.Content.ReadAsByteArrayAsync().Result;
+
+                        Console.WriteLine("Got bytes");
+                    }
                 }
+                else
+                {
+                    Console.WriteLine($"HTTP return code is NOT Success Status Code: {httpResponse.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error evaluating HTTP result\n{ex.ToString()}");
+
+                return null;
             }
 
             TimeSpan endToEndDuration = DateTime.UtcNow - startTime;
