@@ -11,9 +11,9 @@
             "loggingOptions": "",
             "registryCredentials": {
               "acriotdevops": {
-                  "username": "$CONTAINER_REGISTRY_USERNAME_acriotdevops",
-                  "password": "$CONTAINER_REGISTRY_PASSWORD_acriotdevops",
-                  "address": "acriotdevops.azurecr.io"
+                "username": "$CONTAINER_REGISTRY_USERNAME_acriotdevops",
+                "password": "$CONTAINER_REGISTRY_PASSWORD_acriotdevops",
+                "address": "acriotdevops.azurecr.io"
               }
             }
           }
@@ -68,16 +68,16 @@
             },
             "env": {
               "IMAGE_PROCESSING_ENDPOINT": {
-                "value": "http://custom-vision:80/image"
+                "value": "http://customvisionmodule:80/image"
               },
               "IMAGE_SOURCE_URL": {
                 "value": "$IMAGE_SOURCE_URL"
               },
               "IMAGE_POLLING_INTERVAL": {
-                "value": "350"
+                "value": "30"
               },
               "MODE": {
-                "value": "TrainingToCloud"
+                "value": "$MODE"
               },
               "CUSTOM_VISION_TRAINING_ApiKey": {
                 "value": "$CUSTOM_VISION_TRAINING_ApiKey"
@@ -93,6 +93,26 @@
               },
               "IP_CAMERA_CREDENTIAL_Password": {
                 "value": "$IP_CAMERA_CREDENTIAL_Password"
+              }
+            }
+          },
+          "customvisionmodule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.CustomVisionModule}",
+              "createOptions": {
+                "HostConfig": {
+                  "PortBindings": {
+                    "80/tcp": [
+                      {
+                        "HostPort": "80"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }

@@ -6,7 +6,7 @@ namespace HttpVideoFrameCaptureModule
 {
     public enum OperatingMode
     {
-        ImageClassification,
-        TrainingToCloud
+        ImageClassification = 1,
+        TrainingToCloud = 2
     }
 }

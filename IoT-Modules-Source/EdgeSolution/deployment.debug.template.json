@@ -76,6 +76,29 @@
               "image": "${MODULES.HttpVideoFrameCaptureModule.debug}",
               "createOptions": {}
             }
+          },
+          "SampleModule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.SampleModule.debug}",
+              "createOptions": {
+                "ExposedPorts": {
+                  "5678/tcp": {}
+                },
+                "HostConfig": {
+                  "PortBindings": {
+                    "5678/tcp": [
+                      {
+                        "HostPort": "5678"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -85,7 +108,8 @@
         "schemaVersion": "1.0",
         "routes": {
           "HttpVideoFrameCaptureModuleToIoTHub": "FROM /messages/modules/HttpVideoFrameCaptureModule/outputs/* INTO $upstream",
-          "sensorToHttpVideoFrameCaptureModule": "FROM /messages/modules/tempSensor/outputs/temperatureOutput INTO BrokeredEndpoint(\"/modules/HttpVideoFrameCaptureModule/inputs/input1\")"
+          "sensorToHttpVideoFrameCaptureModule": "FROM /messages/modules/tempSensor/outputs/temperatureOutput INTO BrokeredEndpoint(\"/modules/HttpVideoFrameCaptureModule/inputs/input1\")",
+          "SampleModuleToIoTHub": "FROM /messages/modules/SampleModule/outputs/* INTO $upstream"
         },
         "storeAndForwardConfiguration": {
           "timeToLiveSecs": 7200

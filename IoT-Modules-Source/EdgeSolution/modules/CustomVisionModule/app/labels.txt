@@ -1,0 +1,6 @@
+ItemsOnTable
+ObjectsOnSofà
+OpenTruck
+PersonsAtTable
+StandUpPersons
+TvWatcher

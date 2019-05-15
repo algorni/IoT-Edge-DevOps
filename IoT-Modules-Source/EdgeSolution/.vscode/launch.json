@@ -37,13 +37,36 @@
       "env": {
         "EdgeHubConnectionString": "${config:azure-iot-edge.EdgeHubConnectionString}",
         "EdgeModuleCACertificateFile": "${config:azure-iot-edge.EdgeModuleCACertificateFile}",
-        "IMAGE_PROCESSING_ENDPOINT":"http://custom-vision:80/image",
-        "IMAGE_SOURCE_URL":"http://www.webcam.comune.genova.it/images_out/nervi/current.jpg",
-        "IMAGE_POLLING_INTERVAL":"15",
-        "MODE":"TrainingToCloud",
-        "CUSTOM_VISION_TRAINING_ApiKey" :"6e79bfc87a6a424899a5af4705ec2d6",
-        "CUSTOM_VISION_TRAINING_EndPoint":"https://westeurope.api.cognitive.microsoft.com/customvision/v3.0/Training/",
-        "CUSTOM_VISION_TRAINING_ProjectId":"1e9a8dd8-f5c5-4510-948f-b89d3c6cc0b8"
+        "IMAGE_PROCESSING_ENDPOINT": "http://custom-vision:80/image",
+        "IMAGE_SOURCE_URL": "http://www.webcam.comune.genova.it/images_out/nervi/current.jpg",
+        "IMAGE_POLLING_INTERVAL": "15",
+        "MODE": "TrainingToCloud",
+        "CUSTOM_VISION_TRAINING_ApiKey": "6e79bfc87a6a424899a5af4705ec2d6",
+        "CUSTOM_VISION_TRAINING_EndPoint": "https://westeurope.api.cognitive.microsoft.com/customvision/v3.0/Training/",
+        "CUSTOM_VISION_TRAINING_ProjectId": "1e9a8dd8-f5c5-4510-948f-b89d3c6cc0b8"
+      }
+    },
+    {
+      "name": "SampleModule Remote Debug (Python)",
+      "type": "python",
+      "request": "attach",
+      "port": 5678,
+      "host": "localhost",
+      "logToFile": true,
+      "redirectOutput": true,
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/modules/SampleModule",
+          "remoteRoot": "/app"
+        }
+      ],
+      "windows": {
+        "pathMappings": [
+          {
+            "localRoot": "${workspaceFolder}\\modules\\SampleModule",
+            "remoteRoot": "/app"
+          }
+        ]
       }
     }
   ]
