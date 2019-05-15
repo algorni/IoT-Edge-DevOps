@@ -14,6 +14,7 @@ using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 
@@ -57,9 +58,9 @@ namespace HttpVideoFrameCaptureModule
 
             var serviceProvider = serviceCollection.BuildServiceProvider();    
 
-            logger = serviceProvider.GetService<ILogger<Program>>();       
+            logger = serviceProvider.GetService<ILogger<Program>>();
 
-            Console.WriteLine("Configuration loaded");
+            logger.LogDebug("Configuration loaded");
 
             //Getting the IMAGE PROCESSING ENDOPOINT (the Custom Vision Module trained)
             IMAGE_PROCESSING_ENDPOINT = configuration["IMAGE_PROCESSING_ENDPOINT"].ToString();
