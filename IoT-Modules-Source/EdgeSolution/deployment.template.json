@@ -74,7 +74,7 @@
                 "value": "$IMAGE_SOURCE_URL"
               },
               "IMAGE_POLLING_INTERVAL": {
-                "value": "30"
+                "value": "$POLLING_TIME"
               },
               "MODE": {
                 "value": "$MODE"
