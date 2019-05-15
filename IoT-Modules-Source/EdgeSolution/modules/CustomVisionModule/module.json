@@ -4,7 +4,7 @@
   "image": {
     "repository": "acriotdevops.azurecr.io/customvisionmodule",
     "tag": {
-      "version": "1.4.0",
+      "version": "1.8.0",
       "platforms": {
         "amd64": "./Dockerfile",
         "amd64.debug": "./Dockerfile.amd64.debug",
