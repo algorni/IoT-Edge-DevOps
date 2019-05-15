@@ -13,7 +13,9 @@ using Microsoft.Azure.CognitiveServices.Vision.CustomVision.Training;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+
 
 namespace HttpVideoFrameCaptureModule
 {
@@ -37,6 +39,8 @@ namespace HttpVideoFrameCaptureModule
 
         static CustomVisionTrainingClient customVisionTrainingClient = null;
 
+        static ILogger<Program> logger = null;
+
         static void Main(string[] args)
         {
             Console.WriteLine("httpVideoFrameCaptureModule module starting...");
@@ -47,6 +51,13 @@ namespace HttpVideoFrameCaptureModule
            .AddEnvironmentVariables();
 
             configuration = builder.Build();
+
+            var serviceCollection = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+            ConfigureServices(serviceCollection);
+
+            var serviceProvider = serviceCollection.BuildServiceProvider();    
+
+            logger = serviceProvider.GetService<ILogger<Program>>();       
 
             Console.WriteLine("Configuration loaded");
 
@@ -101,6 +112,11 @@ namespace HttpVideoFrameCaptureModule
             AssemblyLoadContext.Default.Unloading += (ctx) => cts.Cancel();
             Console.CancelKeyPress += (sender, cpe) => cts.Cancel();
             WhenCancelled(cts.Token).Wait();
+        }
+
+        private static void ConfigureServices(IServiceCollection services)
+        {
+            services.AddLogging(configure => configure.AddConsole());  
         }
 
         /// <summary>
