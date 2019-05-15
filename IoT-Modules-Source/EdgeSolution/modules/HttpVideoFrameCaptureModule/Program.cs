@@ -177,6 +177,8 @@ namespace HttpVideoFrameCaptureModule
 
                     if (MODE == OperatingMode.ImageClassification)
                     {
+                        Console.WriteLine("Calling Image Classification");
+
                         //call the Custom Vision Module 
                         PredictionResponse predictionResponse = invokePrediction(imageBytes, moduleClient);
 
@@ -348,6 +350,8 @@ namespace HttpVideoFrameCaptureModule
             try
             {
                 httpResponse = httpClient.PostAsync(IMAGE_PROCESSING_ENDPOINT, imageContent).Result;
+
+                Console.WriteLine("Image Classification endpoint called.");
             }
             catch (Exception ex)
             {
@@ -356,12 +360,27 @@ namespace HttpVideoFrameCaptureModule
                 return null;
             }
 
-            if (httpResponse.IsSuccessStatusCode)
+            try
             {
-                string predictionResponseString = httpResponse.Content.ReadAsStringAsync().Result;
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"HTTP call IsSuccessStatusCode: {httpResponse.StatusCode}");
 
-                //parse as JSON
-                predictionResponse = JsonConvert.DeserializeObject<PredictionResponse>(predictionResponseString);
+                    string predictionResponseString = httpResponse.Content.ReadAsStringAsync().Result;
+
+                    //parse as JSON
+                    predictionResponse = JsonConvert.DeserializeObject<PredictionResponse>(predictionResponseString);
+                }
+                else
+                {
+                    Console.WriteLine($"HTTP return code is NOT Success Status Code: {httpResponse.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error evaluating HTTP result\n{ex.ToString()}");
+
+                return null;
             }
 
             TimeSpan endToEndDuration = DateTime.UtcNow - startTime;
@@ -384,7 +403,11 @@ namespace HttpVideoFrameCaptureModule
             message.ContentType = "application/json";
             message.Properties.Add("MSG", "PredictionResponse");
 
-            moduleClient.SendEventAsync(message).Wait();
+            Console.WriteLine("Publishing Prediction Result to Module Output: predictions...");
+
+            moduleClient.SendEventAsync("predictions", message).Wait();
+
+            Console.WriteLine("Publishing Prediction Result to Module Output done");
         }
 
 
