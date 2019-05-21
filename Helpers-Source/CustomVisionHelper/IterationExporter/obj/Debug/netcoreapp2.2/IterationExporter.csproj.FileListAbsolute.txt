@@ -1,0 +1,15 @@
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\obj\Debug\netcoreapp2.2\IterationExporter.csprojAssemblyReference.cache
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\obj\Debug\netcoreapp2.2\IterationExporter.csproj.CoreCompileInputs.cache
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\obj\Debug\netcoreapp2.2\IterationExporter.AssemblyInfoInputs.cache
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\obj\Debug\netcoreapp2.2\IterationExporter.AssemblyInfo.cs
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\IterationExporter.deps.json
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\IterationExporter.runtimeconfig.json
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\IterationExporter.runtimeconfig.dev.json
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\IterationExporter.dll
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\IterationExporter.pdb
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\CustomVisionHelper.dll
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\CustomVisionHelper.pdb
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\obj\Debug\netcoreapp2.2\IterationExporter.csproj.CopyComplete
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\obj\Debug\netcoreapp2.2\IterationExporter.dll
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\obj\Debug\netcoreapp2.2\IterationExporter.pdb
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\IterationExporter\bin\Debug\netcoreapp2.2\appsettings.json
