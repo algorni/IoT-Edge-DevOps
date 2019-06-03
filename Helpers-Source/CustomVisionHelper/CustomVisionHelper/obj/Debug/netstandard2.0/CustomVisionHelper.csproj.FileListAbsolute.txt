@@ -1,0 +1,9 @@
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\bin\Debug\netstandard2.0\CustomVisionHelper.deps.json
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\bin\Debug\netstandard2.0\CustomVisionHelper.dll
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\bin\Debug\netstandard2.0\CustomVisionHelper.pdb
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\obj\Debug\netstandard2.0\CustomVisionHelper.csprojAssemblyReference.cache
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\obj\Debug\netstandard2.0\CustomVisionHelper.csproj.CoreCompileInputs.cache
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\obj\Debug\netstandard2.0\CustomVisionHelper.AssemblyInfoInputs.cache
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\obj\Debug\netstandard2.0\CustomVisionHelper.AssemblyInfo.cs
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\obj\Debug\netstandard2.0\CustomVisionHelper.dll
+C:\Users\sysadmin\source\IoT-Edge-DevOps\Helpers-Source\CustomVisionHelper\CustomVisionHelper\obj\Debug\netstandard2.0\CustomVisionHelper.pdb
